@@ -150,7 +150,7 @@ link() {
 }
 
 # Top-level dotfiles
-link "$DOTFILES_DIR/home/.zshrc" "$HOME/.zshrc"
+link "$DOTFILES_DIR/home/.zshrc" "$TARGET_HOME/.zshrc"
 
 # Optional Git config
 if [[ -f "$DOTFILES_DIR/home/.gitconfig" ]]; then
@@ -170,14 +170,14 @@ if [[ -f "$DOTFILES_DIR/home/.gitconfig" ]]; then
     git config -f "$tmp_gitcfg" user.name "$git_name"
     git config -f "$tmp_gitcfg" user.email "$git_email"
 
-    link "$tmp_gitcfg" "$HOME/.gitconfig"
+    link "$tmp_gitcfg" "$TARGET_HOME/.gitconfig"
   else
     echo "Skipping Git config; existing ~/.gitconfig left untouched."
   fi
 fi
 
 if [[ -f "$DOTFILES_DIR/home/.p10k.zsh" ]]; then
-  link "$DOTFILES_DIR/home/.p10k.zsh" "$HOME/.p10k.zsh"
+  link "$DOTFILES_DIR/home/.p10k.zsh" "$TARGET_HOME/.p10k.zsh"
 fi
 
 # SSH config (GitHub-only config, no keys)
@@ -185,7 +185,7 @@ if [[ -f "$DOTFILES_DIR/home/.ssh/config" ]]; then
   echo -n "Apply SSH config for GitHub (~/.ssh/config) from this repo? [y/N]: "
   read -r ans
   if [[ "$ans" =~ ^[Yy]$ ]]; then
-    link "$DOTFILES_DIR/home/.ssh/config" "$HOME/.ssh/config"
+    link "$DOTFILES_DIR/home/.ssh/config" "$TARGET_HOME/.ssh/config"
   else
     echo "Skipping SSH config; existing ~/.ssh/config left untouched."
   fi
@@ -194,7 +194,7 @@ fi
 # ~/.config subdirectories
 for dir in nvim ghostty zellij lsd; do
   if [[ -d "$DOTFILES_DIR/config/$dir" ]]; then
-    link "$DOTFILES_DIR/config/$dir" "$HOME/.config/$dir"
+    link "$DOTFILES_DIR/config/$dir" "$TARGET_HOME/.config/$dir"
   fi
 done
 
