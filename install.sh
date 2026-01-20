@@ -85,9 +85,15 @@ install_tools_and_shell() {
     git clone https://github.com/jeffreytse/zsh-vi-mode.git "$HOME/.zsh-vi-mode" || true
   fi
 
-  if command -v zsh >/dev/null 2>&1 && [[ "${SHELL:-}" != "/bin/zsh" ]]; then
-    echo "==> Changing default shell to zsh (you may be prompted for your password)..."
-    chsh -s /bin/zsh "$USER" || true
+  if command -v zsh >/dev/null 2>&1; then
+    local zsh_path
+    zsh_path="$(command -v zsh)"
+    if [[ "${SHELL:-}" != "$zsh_path" ]]; then
+      echo "==> Changing default shell to $zsh_path (you may be prompted for your password)..."
+      if ! chsh -s "$zsh_path" "$USER"; then
+        echo "WARN: Failed to change default shell; run 'chsh -s $zsh_path' manually." >&2
+      fi
+    fi
   fi
 }
 
