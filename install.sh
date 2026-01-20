@@ -37,6 +37,7 @@ install_repos_and_packages() {
     btop \
     jq \
     nmap \
+    ripgrep \
     zellij \
     zoxide \
     powershell || true
@@ -88,11 +89,15 @@ install_tools_and_shell() {
   if command -v zsh >/dev/null 2>&1; then
     local zsh_path
     zsh_path="$(command -v zsh)"
-    if [[ "${SHELL:-}" != "$zsh_path" ]]; then
+    echo -n "Set default shell to $zsh_path for user $USER? [y/N]: "
+    read -r ans
+    if [[ "$ans" =~ ^[Yy]$ ]]; then
       echo "==> Changing default shell to $zsh_path (you may be prompted for your password)..."
       if ! chsh -s "$zsh_path" "$USER"; then
         echo "WARN: Failed to change default shell; run 'chsh -s $zsh_path' manually." >&2
       fi
+    else
+      echo "Skipping default shell change; you can run 'chsh -s $zsh_path' later."
     fi
   fi
 }
