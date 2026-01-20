@@ -19,18 +19,14 @@ install_repos_and_packages() {
     | sudo tee /etc/yum.repos.d/microsoft.repo >/dev/null || true
   sudo dnf makecache -y || true
 
-  echo "==> Installing base packages..."
+  echo "==> Installing base packages (core tools)..."
   sudo dnf install -y \
     dnf-plugins-core \
     wget \
     openssl \
-    kubectl \
-    k9s \
-    azure-cli \
-    helm \
     zsh \
     git \
-    nvim \
+    neovim \
     p7zip \
     p7zip-plugins \
     unzip \
@@ -39,8 +35,13 @@ install_repos_and_packages() {
     nmap \
     ripgrep \
     zellij \
-    zoxide \
-    powershell || true
+    zoxide
+
+  echo "==> Installing Kubernetes / Helm tools (optional)..."
+  sudo dnf install -y kubectl k9s helm || true
+
+  echo "==> Installing Azure CLI and PowerShell (optional, via Microsoft repo)..."
+  sudo dnf install -y azure-cli powershell || true
 
   echo "==> Installing HashiCorp repo + tools (packer, terraform)..."
   wget -O- https://rpm.releases.hashicorp.com/fedora/hashicorp.repo \
