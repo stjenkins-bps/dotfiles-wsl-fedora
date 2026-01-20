@@ -94,8 +94,14 @@ install_tools_and_shell() {
     read -r ans
     if [[ "$ans" =~ ^[Yy]$ ]]; then
       echo "==> Changing default shell to $zsh_path (you may be prompted for your password)..."
-      if ! chsh -s "$zsh_path" "$USER"; then
-        echo "WARN: Failed to change default shell; run 'chsh -s $zsh_path' manually." >&2
+      if chsh -s "$zsh_path" "$USER" 2>/dev/null; then
+        echo "Default shell updated. Starting a new zsh login shell..."
+        exec "$zsh_path" -l
+      elif command -v sudo >/dev/null 2>&1 && sudo chsh -s "$zsh_path" "$USER"; then
+        echo "Default shell updated via sudo. Starting a new zsh login shell..."
+        exec "$zsh_path" -l
+      else
+        echo "WARN: Failed to change default shell; run 'chsh -s $zsh_path' (or with sudo) manually." >&2
       fi
     else
       echo "Skipping default shell change; you can run 'chsh -s $zsh_path' later."
