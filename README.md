@@ -15,4 +15,10 @@ Clone this repo, `cd` into it and run:
 bash install.sh
 ```
 
-This will (re)symlink the tracked dotfiles into your `$HOME` and `~/.config` based on this repo's contents.
+This will:
+- enable the required Fedora repos (COPR zellij, Microsoft),
+- install your base tools (dnf packages, HashiCorp tools, Docker, AKS CLI, talosctl, NVM + GitHub Copilot CLI, zsh plugins),
+- install Hack Nerd Font into your user font directory for terminal/icons, and
+- (re)symlink the tracked dotfiles into your `$HOME` and `~/.config` based on this repo's contents.
+
+Note: this script expects Fedora with `dnf` and will prompt for `sudo` where needed.
