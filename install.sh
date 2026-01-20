@@ -194,3 +194,7 @@ for dir in nvim ghostty zellij lsd; do
 done
 
 echo "Done. Your dotfiles are now linked into $HOME from $DOTFILES_DIR."
+
+install_repos_and_packages
+install_tools_and_shell
+install_fonts
