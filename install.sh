@@ -4,6 +4,15 @@ set -euo pipefail
 # Install Fedora packages, tools, and symlink dotfiles from this repo into $HOME
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Determine which user/home to configure (supports running via sudo)
+if [[ -n "${SUDO_USER-}" && "${SUDO_USER}" != "root" ]]; then
+  TARGET_USER="$SUDO_USER"
+  TARGET_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6 || echo "/home/$SUDO_USER")"
+else
+  TARGET_USER="${USER:-$LOGNAME}"
+  TARGET_HOME="${HOME:-/home/$TARGET_USER}"
+fi
+
 install_repos_and_packages() {
   if ! command -v dnf >/dev/null 2>&1; then
     echo "dnf not found; skipping Fedora package install" >&2
@@ -53,7 +62,7 @@ install_repos_and_packages() {
   sudo dnf config-manager addrepo \
     --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo || true
   sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || true
-  sudo usermod -aG docker "$USER" || true
+  sudo usermod -aG docker "$TARGET_USER" || true
 
   echo "==> Installing Azure AKS CLI (az aks)..."
   if command -v az >/dev/null 2>&1; then
@@ -63,15 +72,16 @@ install_repos_and_packages() {
 
 install_tools_and_shell() {
   echo "==> Installing NVM, Node, and GitHub Copilot CLI (if needed)..."
-  if [[ ! -d "$HOME/.nvm" ]]; then
+  if [[ ! -d "$TARGET_HOME/.nvm" ]]; then
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash || true
   fi
 
-  export NVM_DIR="$HOME/.nvm"
+  export NVM_DIR="$TARGET_HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
   if command -v npm >/dev/null 2>&1; then
-    npm install -g npm@11 @github/copilot || true
+    echo "==> Installing npm@11 and @github/copilot globally for current user (no sudo)..."
+    npm install -g npm@11 @github/copilot || echo "WARN: npm global install failed; run 'npm install -g npm@11 @github/copilot' manually if needed." >&2
   fi
 
   echo "==> Installing talosctl..."
@@ -80,29 +90,30 @@ install_tools_and_shell() {
   fi
 
   echo "==> Installing zsh plugins (powerlevel10k, zsh-vi-mode)..."
-  if [[ ! -d "$HOME/powerlevel10k" ]]; then
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$HOME/powerlevel10k" || true
+  if [[ ! -d "$TARGET_HOME/powerlevel10k" ]]; then
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$TARGET_HOME/powerlevel10k" || true
   fi
-  if [[ ! -d "$HOME/.zsh-vi-mode" ]]; then
-    git clone https://github.com/jeffreytse/zsh-vi-mode.git "$HOME/.zsh-vi-mode" || true
+  if [[ ! -d "$TARGET_HOME/.zsh-vi-mode" ]]; then
+    git clone https://github.com/jeffreytse/zsh-vi-mode.git "$TARGET_HOME/.zsh-vi-mode" || true
   fi
 
   if command -v zsh >/dev/null 2>&1; then
     local zsh_path
     zsh_path="$(command -v zsh)"
-    echo -n "Set default shell to $zsh_path for user $USER? [y/N]: "
+    echo -n "Set default shell to $zsh_path for user $TARGET_USER? [y/N]: "
     read -r ans
     if [[ "$ans" =~ ^[Yy]$ ]]; then
-      echo "==> Changing default shell to $zsh_path (you may be prompted for your password)..."
-      if chsh -s "$zsh_path" "$USER" 2>/dev/null; then
-        echo "Default shell updated. Starting a new zsh login shell..."
-        exec "$zsh_path" -l
-      elif command -v sudo >/dev/null 2>&1 && sudo chsh -s "$zsh_path" "$USER"; then
-        echo "Default shell updated via sudo. Starting a new zsh login shell..."
-        exec "$zsh_path" -l
+      echo "==> Changing default shell to $zsh_path for $TARGET_USER (you may be prompted for your password)..."
+      local shell_changed=0
+      if chsh -s "$zsh_path" "$TARGET_USER" 2>/dev/null; then
+        shell_changed=1
+      elif command -v sudo >/dev/null 2>&1 && sudo chsh -s "$zsh_path" "$TARGET_USER"; then
+        shell_changed=1
       else
-        echo "WARN: Failed to change default shell; run 'chsh -s $zsh_path' (or with sudo) manually." >&2
+        echo "WARN: Failed to change default shell; run 'chsh -s $zsh_path $TARGET_USER' (or with sudo) manually." >&2
       fi
+      echo "Starting a new zsh login shell..."
+      exec "$zsh_path" -l
     else
       echo "Skipping default shell change; you can run 'chsh -s $zsh_path' later."
     fi
@@ -111,7 +122,7 @@ install_tools_and_shell() {
 
 install_fonts() {
   echo "==> Installing Hack Nerd Font (nerd font for terminal + icons)..."
-  local font_dir="$HOME/.local/share/fonts"
+  local font_dir="$TARGET_HOME/.local/share/fonts"
   mkdir -p "$font_dir"
   if ! ls "$font_dir"/*Hack*Nerd*Font* >/dev/null 2>&1; then
     local tmpdir
