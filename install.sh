@@ -131,10 +131,23 @@ link "$DOTFILES_DIR/home/.zshrc" "$HOME/.zshrc"
 
 # Optional Git config
 if [[ -f "$DOTFILES_DIR/home/.gitconfig" ]]; then
-  echo -n "Apply dotfiles Git config (~/.gitconfig) from this repo? [y/N]: "
+  echo -n "Configure global Git for this user from this repo? [y/N]: "
   read -r ans
   if [[ "$ans" =~ ^[Yy]$ ]]; then
-    link "$DOTFILES_DIR/home/.gitconfig" "$HOME/.gitconfig"
+    # Ask for Git identity
+    echo -n "  Git user.name  (e.g. jdoe): "
+    read -r git_name
+    echo -n "  Git user.email (e.g. jdoe@example.com): "
+    read -r git_email
+
+    # Start from the template .gitconfig but override [user]
+    tmp_gitcfg="$(mktemp)"
+    cp "$DOTFILES_DIR/home/.gitconfig" "$tmp_gitcfg"
+
+    git config -f "$tmp_gitcfg" user.name "$git_name"
+    git config -f "$tmp_gitcfg" user.email "$git_email"
+
+    link "$tmp_gitcfg" "$HOME/.gitconfig"
   else
     echo "Skipping Git config; existing ~/.gitconfig left untouched."
   fi
