@@ -81,9 +81,9 @@ install_tools_and_shell() {
   [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
   if command -v npm >/dev/null 2>&1; then
-    echo "==> Installing npm@11 and @github/copilot globally with sudo (system prefix)..."
-    if ! sudo npm install -g npm@11 @github/copilot; then
-      echo "WARN: 'sudo npm install -g npm@11 @github/copilot' failed; run it manually if needed." >&2
+    echo "==> Installing @github/copilot globally with sudo (system prefix)..."
+    if ! sudo npm install -g @github/copilot; then
+      echo "WARN: 'sudo npm install -g @github/copilot' failed; run it manually if needed." >&2
     fi
   fi
 
